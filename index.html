@@ -107,7 +107,14 @@
         <button class="add-note" onclick="addNote()">Add</button>
         <div class="notes" id="notes-container"></div>
     </div>
-
+    <script>
+    document.getElementById('new-note').addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            addNote();
+        }
+    });
+    </script>
     <script>
         function addNote() {
             const noteInput = document.getElementById('new-note');
