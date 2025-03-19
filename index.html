@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distracted for Eternity</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Griffy&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Griffy', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #0bb3f0, #42bfd2);
+        }
+        .container {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 600px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            text-align: center;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .notes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .note {
+            background-color: #fbff01;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 200px;
+            height: 200px;
+            box-sizing: border-box;
+            position: relative;
+        }
+        .note textarea {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: none;
+            resize: none;
+            font-family: 'Griffy', sans-serif;
+            font-size: 16px;
+            box-sizing: border-box;
+            padding: 10px;
+            border-radius: 8px;
+            outline: none;
+        }
+        .note button {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: #dc3545;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 5px;
+        }
+        .note button:hover {
+            background-color: #c82333;
+        }
+        input[type="text"] {
+            padding: 10px;
+            width: calc(100% - 22px);
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            outline: none;
+        }
+        button.add-note {
+            padding: 10px 20px;
+            border: none;
+            background-color: #28a745;
+            color: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+            display: block;
+            margin: 0 auto;
+        }
+        button.add-note:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Distracted for Eternity</h1>
+        <h2>By Rushil @ Scrapyard Silicon Valley</h2>
+        <input type="text" id="new-note" placeholder="Add a new note">
+        <button class="add-note" onclick="addNote()">Add</button>
+        <div class="notes" id="notes-container"></div>
+    </div>
+
+    <script>
+        function addNote() {
+            const noteInput = document.getElementById('new-note');
+            const notesContainer = document.getElementById('notes-container');
+            const noteText = noteInput.value.trim();
+
+            if (noteText !== '') {
+                const note = document.createElement('div');
+                note.className = 'note';
+
+                const textarea = document.createElement('textarea');
+                textarea.value = noteText;
+                note.appendChild(textarea);
+
+                const deleteButton = document.createElement('button');
+                deleteButton.innerHTML = 'X';
+                deleteButton.onclick = function() {
+                    notesContainer.removeChild(note);
+                };
+                note.appendChild(deleteButton);
+
+                notesContainer.appendChild(note);
+                noteInput.value = '';
+            }
+        }
+    </script>
+</body>
+</html>
