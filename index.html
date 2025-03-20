@@ -135,6 +135,21 @@
             font-size: 14px;
             display: none;
         }
+        .delete-note-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: red;
+            border: none;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 20px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -163,7 +178,10 @@
             note.draggable = true;
             note.style.top = `${Math.random() * window.innerHeight * 0.5}px`;
             note.style.left = `${Math.random() * window.innerWidth * 0.5}px`;
-            note.innerHTML = `<textarea>${text}</textarea>`;
+            note.innerHTML = `
+                <textarea>${text}</textarea>
+                <button class="delete-note-btn" onclick="deleteNote(this)">x</button>
+            `;
             note.ondragstart = function (event) {
                 draggingNote = event.target;
                 draggingNote.style.opacity = "0.5";
@@ -175,6 +193,10 @@
                 draggingNote = null;
             };
             document.getElementById("notes-container").appendChild(note);
+        }
+        function deleteNote(button) {
+            const note = button.parentElement;
+            note.remove();
         }
         document.addEventListener("dragover", function (event) {
             event.preventDefault();
