@@ -1,225 +1,584 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Distracted for Eternity</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Griffy&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Griffy', sans-serif;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            height: 100vh;
-            background: white;
-            overflow: hidden;
-            position: relative;
-        }
-        .dark-mode {
-            background: black;
-            color: white;
-        }
-        header {
-            width: 100%;
-            padding: 10px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #f8f9fa;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        .dark-mode header {
-            background: #333;
-        }
-        .app-name {
-            font-size: 24px;
-            font-weight: bold;
-        }
-        .notes {
-            flex: 1;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            align-items: flex-start;
-            padding: 20px;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        .note {
-            background-color: #fff9b1;
-            padding: 10px;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            width: 200px;
-            height: 200px;
-            box-sizing: border-box;
-            position: absolute;
-            cursor: grab;
-            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-        }
-        .note:active {
-            cursor: grabbing;
-            transform: scale(1.05);
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
-        }
-        .note textarea {
-            width: 100%;
-            height: 100%;
-            border: none;
-            background: none;
-            resize: none;
-            font-family: 'Griffy', sans-serif;
-            font-size: 16px;
-            box-sizing: border-box;
-            padding: 10px;
-            border-radius: 8px;
-            outline: none;
-        }
-        .dark-mode .note {
-            background-color: #444;
-        }
-        .add-note-container {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            display: flex;
-            gap: 10px;
-        }
-        .add-note-input {
-            padding: 10px;
-            width: 250px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            font-size: 16px;
-            outline: none;
-            transition: border-color 0.2s ease-in-out;
-        }
-        .add-note-input:focus {
-            border-color: #28a745;
-        }
-        .add-note-btn {
-            padding: 10px 15px;
-            border-radius: 8px;
-            border: none;
-            background-color: #28a745;
-            color: white;
-            cursor: pointer;
-            transition: background-color 0.2s ease-in-out;
-        }
-        .add-note-btn:hover {
-            background-color: #218838;
-        }
-        .dark-mode-btn {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            transition: transform 0.2s ease-in-out;
-        }
-        .dark-mode-btn:hover {
-            transform: rotate(20deg);
-        }
-        .popup {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 14px;
-            display: none;
-        }
-        .delete-note-btn {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: red;
-            border: none;
-            color: white;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-            font-size: 14px;
-            line-height: 20px;
-            text-align: center;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Distracted for Eternity 2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .dark-mode {
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d3436 100%);
+      color: white;
+    }
+
+    header {
+      width: 100%;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(5px);
+    }
+
+    .dark-mode header {
+      background: rgba(30, 30, 30, 0.9);
+    }
+
+    .app-name {
+      font-size: 28px;
+      font-weight: bold;
+      background: linear-gradient(45deg, #ff6b6b, #6c5ce7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 15px;
+    }
+
+    .tool-btn {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+      color: #444;
+    }
+
+    .dark-mode .tool-btn {
+      color: #fff;
+    }
+
+    .tool-btn:hover {
+      background: rgba(0, 0, 0, 0.1);
+      transform: scale(1.1);
+    }
+
+    .canvas-container {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.95);
+      z-index: 1000;
+    }
+
+    .dark-mode .canvas-container {
+      background: rgba(0, 0, 0, 0.95);
+    }
+
+    #whiteboard {
+      cursor: crosshair;
+    }
+
+    .canvas-tools {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      padding: 10px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      align-items: center;
+    }
+
+    .size-slider {
+      width: 100px;
+      margin: 0 10px;
+    }
+
+    .tool-select {
+      padding: 8px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+    }
+
+    .dark-mode .canvas-tools {
+      background: #333;
+    }
+
+    .color-picker {
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .notes {
+      flex: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      align-items: flex-start;
+      padding: 20px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .note {
+      background: linear-gradient(135deg, #fff9b1 0%, #fff5a5 100%);
+      padding: 15px;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      width: 220px;
+      height: 220px;
+      box-sizing: border-box;
+      position: absolute;
+      cursor: grab;
+      transition: all 0.3s ease;
+    }
+
+    .note:active {
+      cursor: grabbing;
+      transform: scale(1.05) rotate(2deg);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .note textarea {
+      width: 100%;
+      height: calc(100% - 20px);
+      border: none;
+      background: none;
+      resize: none;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #333;
+      padding: 10px;
+      border-radius: 8px;
+      outline: none;
+    }
+
+    .dark-mode .note {
+      background: linear-gradient(135deg, #2d3436 0%, #444 100%);
+    }
+
+    .dark-mode .note textarea {
+      color: white;
+    }
+
+    .add-note-container {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 15px;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(5px);
+    }
+
+    .dark-mode .add-note-container {
+      background: rgba(30, 30, 30, 0.9);
+    }
+
+    .add-note-input {
+      padding: 12px;
+      width: 300px;
+      border-radius: 10px;
+      border: 2px solid #ddd;
+      font-size: 16px;
+      outline: none;
+      transition: all 0.3s ease;
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .dark-mode .add-note-input {
+      background: rgba(60, 60, 60, 0.9);
+      border-color: #555;
+      color: white;
+    }
+
+    .add-note-input:focus {
+      border-color: #6c5ce7;
+      box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.2);
+    }
+
+    .btn {
+      padding: 12px 20px;
+      border-radius: 10px;
+      border: none;
+      background: #6c5ce7;
+      color: white;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .btn:hover {
+      background: #5849c2;
+      transform: translateY(-2px);
+    }
+
+    .delete-note-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(255, 59, 48, 0.9);
+      border: none;
+      color: white;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .delete-note-btn:hover {
+      background: #ff3b30;
+      transform: scale(1.1);
+    }
+
+    .popup {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 15px 25px;
+      border-radius: 10px;
+      font-size: 14px;
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
 </head>
+
 <body>
-    <header>
-        <div class="app-name">Distracted for Eternity</div>
-        <button class="dark-mode-btn" onclick="toggleDarkMode()">🌙</button>
-    </header>
-    <div class="notes" id="notes-container"></div>
-    <div class="add-note-container">
-        <input type="text" id="new-note" class="add-note-input" placeholder="Write a note...">
-        <button class="add-note-btn" onclick="addNote()">+</button>
+  <header>
+    <div class="app-name">Distracted for Eternity</div>
+    <div class="toolbar">
+      <button class="tool-btn" onclick="toggleWhiteboard()" title="Whiteboard">
+        <i class="fas fa-pencil-alt"></i>
+      </button>
+      <button class="tool-btn" onclick="toggleDarkMode()" title="Dark Mode">
+        <i class="fas fa-moon"></i>
+      </button>
     </div>
-    <div class="popup" id="popup">Drag notes around! Click the moon to toggle dark mode!</div>
-    <script>
-        let draggingNote = null;
-        function addNote() {
-            const text = document.getElementById("new-note").value.trim();
-            if (text !== "") {
-                createNote(text);
-                document.getElementById("new-note").value = "";
-            }
-        }
-        function createNote(text = "") {
-            const note = document.createElement("div");
-            note.classList.add("note");
-            note.draggable = true;
-            note.style.top = `${Math.random() * window.innerHeight * 0.5}px`;
-            note.style.left = `${Math.random() * window.innerWidth * 0.5}px`;
-            note.innerHTML = `
-                <textarea>${text}</textarea>
-                <button class="delete-note-btn" onclick="deleteNote(this)">x</button>
-            `;
-            note.ondragstart = function (event) {
-                draggingNote = event.target;
-                draggingNote.style.opacity = "0.5";
-            };
-            note.ondragend = function (event) {
-                draggingNote.style.opacity = "1";
-                draggingNote.style.top = `${event.clientY}px`;
-                draggingNote.style.left = `${event.clientX}px`;
-                draggingNote = null;
-            };
-            document.getElementById("notes-container").appendChild(note);
-        }
-        function deleteNote(button) {
-            const note = button.parentElement;
-            note.remove();
-        }
-        document.addEventListener("dragover", function (event) {
-            event.preventDefault();
-            if (draggingNote) {
-                draggingNote.style.top = `${event.clientY}px`;
-                draggingNote.style.left = `${event.clientX}px`;
-            }
-        });
-        function toggleDarkMode() {
-            document.body.classList.toggle("dark-mode");
-        }
-        window.addEventListener("load", function () {
-            document.getElementById("popup").style.display = "block";
-            setTimeout(() => {
-                document.getElementById("popup").style.display = "none";
-            }, 4000);
-        });
-        document.getElementById("new-note").addEventListener("keydown", function(event) {
-            if (event.key === "Enter") {
-                event.preventDefault();
-                addNote();
-            }
-        });
-    </script>
+  </header>
+
+  <div class="notes" id="notes-container"></div>
+
+  <div class="canvas-container" id="canvas-container">
+    <canvas id="whiteboard"></canvas>
+    <div class="canvas-tools">
+      <select class="tool-select" id="toolSelect">
+        <option value="brush">Brush</option>
+        <option value="eraser">Eraser</option>
+        <option value="line">Line</option>
+        <option value="rectangle">Rectangle</option>
+        <option value="circle">Circle</option>
+      </select>
+      <input type="color" class="color-picker" id="colorPicker" value="#000000">
+      <input type="range" class="size-slider" id="sizeSlider" min="1" max="50" value="2">
+      <button class="btn" onclick="undo()">
+        <i class="fas fa-undo"></i>
+      </button>
+      <button class="btn" onclick="clearCanvas()">
+        <i class="fas fa-eraser"></i> Clear
+      </button>
+      <button class="btn" onclick="toggleWhiteboard()">
+        <i class="fas fa-times"></i> Close
+      </button>
+    </div>
+  </div>
+
+  <div class="add-note-container">
+    <input type="text" id="new-note" class="add-note-input" placeholder="Write a note...">
+    <button class="btn" onclick="addNote()">
+      <i class="fas fa-plus"></i> Add Note
+    </button>
+  </div>
+
+  <div class="popup" id="popup">Drag notes around! Use the toolbar for more features!</div>
+
+  <script>
+    let draggingNote = null;
+    let isDrawing = false;
+    let canvas, ctx;
+
+    function addNote() {
+      const text = document.getElementById("new-note").value.trim();
+      if (text !== "") {
+        createNote(text);
+        document.getElementById("new-note").value = "";
+      }
+    }
+
+    function createNote(text = "") {
+      const note = document.createElement("div");
+      note.classList.add("note");
+      note.draggable = true;
+      note.style.top = `${Math.random() * (window.innerHeight - 300)}px`;
+      note.style.left = `${Math.random() * (window.innerWidth - 250)}px`;
+      note.innerHTML = `
+        <textarea>${text}</textarea>
+        <button class="delete-note-btn" onclick="deleteNote(this)">
+          <i class="fas fa-times"></i>
+        </button>
+      `;
+
+      let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+
+      note.addEventListener('mousedown', dragMouseDown);
+
+      function dragMouseDown(e) {
+        if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON') return;
+        e.preventDefault();
+
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+
+        document.addEventListener('mousemove', elementDrag);
+        document.addEventListener('mouseup', closeDragElement);
+
+        note.style.opacity = "0.8";
+        note.style.zIndex = "1000";
+      }
+
+      function elementDrag(e) {
+        e.preventDefault();
+
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+
+        note.style.top = (note.offsetTop - pos2) + "px";
+        note.style.left = (note.offsetLeft - pos1) + "px";
+      }
+
+      function closeDragElement() {
+        document.removeEventListener('mousemove', elementDrag);
+        document.removeEventListener('mouseup', closeDragElement);
+        note.style.opacity = "1";
+        note.style.zIndex = "";
+      }
+
+      document.getElementById("notes-container").appendChild(note);
+    }
+
+    function deleteNote(button) {
+      button.parentElement.remove();
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle("dark-mode");
+    }
+
+    function toggleWhiteboard() {
+      const container = document.getElementById("canvas-container");
+      container.style.display = container.style.display === "none" ? "block" : "none";
+
+      if (!canvas) {
+        canvas = document.getElementById("whiteboard");
+        ctx = canvas.getContext("2d");
+        initCanvas();
+      }
+    }
+
+    let undoStack = [];
+    let startX, startY;
+
+    function initCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      ctx.strokeStyle = "#000000";
+      ctx.lineWidth = 2;
+      ctx.lineCap = "round";
+
+      canvas.addEventListener("mousedown", startDrawing);
+      canvas.addEventListener("mousemove", draw);
+      canvas.addEventListener("mouseup", stopDrawing);
+      canvas.addEventListener("mouseout", stopDrawing);
+
+      document.getElementById("colorPicker").addEventListener("input", (e) => {
+        ctx.strokeStyle = e.target.value;
+      });
+
+      document.getElementById("sizeSlider").addEventListener("input", (e) => {
+        ctx.lineWidth = e.target.value;
+      });
+
+      saveCanvasState();
+    }
+
+    function saveCanvasState() {
+      undoStack.push(canvas.toDataURL());
+      if (undoStack.length > 10) undoStack.shift();
+    }
+
+    function undo() {
+      if (undoStack.length > 1) {
+        undoStack.pop();
+        const img = new Image();
+        img.src = undoStack[undoStack.length - 1];
+        img.onload = () => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0);
+        };
+      } else {
+        clearCanvas();
+      }
+    }
+
+    function startDrawing(e) {
+      isDrawing = true;
+      const rect = canvas.getBoundingClientRect();
+      startX = e.clientX - rect.left;
+      startY = e.clientY - rect.top;
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const tool = document.getElementById("toolSelect").value;
+
+      ctx.save();
+      ctx.beginPath();
+
+      switch (tool) {
+        case "eraser":
+          const savedColor = ctx.strokeStyle;
+          ctx.strokeStyle = "#ffffff";
+          ctx.lineTo(x, y);
+          ctx.stroke();
+          ctx.strokeStyle = savedColor;
+          break;
+        case "line":
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          const lastState = undoStack[undoStack.length - 1];
+          const img = new Image();
+          img.src = lastState;
+          ctx.drawImage(img, 0, 0);
+          ctx.beginPath();
+          ctx.moveTo(startX, startY);
+          ctx.lineTo(x, y);
+          ctx.stroke();
+          break;
+        case "rectangle":
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          const lastState2 = undoStack[undoStack.length - 1];
+          const img2 = new Image();
+          img2.src = lastState2;
+          ctx.drawImage(img2, 0, 0);
+          ctx.strokeRect(startX, startY, x - startX, y - startY);
+          break;
+        case "circle":
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          const lastState3 = undoStack[undoStack.length - 1];
+          const img3 = new Image();
+          img3.src = lastState3;
+          ctx.drawImage(img3, 0, 0);
+          const radius = Math.sqrt(Math.pow(x - startX, 2) + Math.pow(y - startY, 2));
+          ctx.beginPath();
+          ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
+          ctx.stroke();
+          break;
+        default:
+          ctx.lineTo(x, y);
+          ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    function stopDrawing() {
+      if (!isDrawing) return;
+      isDrawing = false;
+      saveCanvasState();
+    }
+
+    function clearCanvas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    document.addEventListener("dragover", function (event) {
+      event.preventDefault();
+      if (draggingNote) {
+        draggingNote.style.top = `${event.clientY - 100}px`;
+        draggingNote.style.left = `${event.clientX - 100}px`;
+      }
+    });
+
+    document.getElementById("new-note").addEventListener("keydown", function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        addNote();
+      }
+    });
+
+    window.addEventListener("load", function () {
+      document.getElementById("popup").style.display = "block";
+      setTimeout(() => {
+        document.getElementById("popup").style.display = "none";
+      }, 4000);
+    });
+
+    window.addEventListener("resize", function () {
+      if (canvas) {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+    });
+  </script>
 </body>
+
 </html>
