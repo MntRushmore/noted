@@ -76,63 +76,6 @@
       transform: scale(1.1);
     }
 
-    .canvas-container {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(255, 255, 255, 0.95);
-      z-index: 1000;
-    }
-
-    .dark-mode .canvas-container {
-      background: rgba(0, 0, 0, 0.95);
-    }
-
-    #whiteboard {
-      cursor: crosshair;
-    }
-
-    .canvas-tools {
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 10px;
-      padding: 10px;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      align-items: center;
-    }
-
-    .size-slider {
-      width: 100px;
-      margin: 0 10px;
-    }
-
-    .tool-select {
-      padding: 8px;
-      border-radius: 5px;
-      border: 1px solid #ddd;
-    }
-
-    .dark-mode .canvas-tools {
-      background: #333;
-    }
-
-    .color-picker {
-      width: 30px;
-      height: 30px;
-      padding: 0;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
     .notes {
       flex: 1;
       display: flex;
@@ -142,6 +85,7 @@
       padding: 20px;
       width: 100%;
       box-sizing: border-box;
+      position: relative;
     }
 
     .note {
@@ -312,26 +256,6 @@
 
   <div class="canvas-container" id="canvas-container">
     <canvas id="whiteboard"></canvas>
-    <div class="canvas-tools">
-      <select class="tool-select" id="toolSelect">
-        <option value="brush">Brush</option>
-        <option value="eraser">Eraser</option>
-        <option value="line">Line</option>
-        <option value="rectangle">Rectangle</option>
-        <option value="circle">Circle</option>
-      </select>
-      <input type="color" class="color-picker" id="colorPicker" value="#000000">
-      <input type="range" class="size-slider" id="sizeSlider" min="1" max="50" value="2">
-      <button class="btn" onclick="undo()">
-        <i class="fas fa-undo"></i>
-      </button>
-      <button class="btn" onclick="clearCanvas()">
-        <i class="fas fa-eraser"></i> Clear
-      </button>
-      <button class="btn" onclick="toggleWhiteboard()">
-        <i class="fas fa-times"></i> Close
-      </button>
-    </div>
   </div>
 
   <div class="add-note-container">
@@ -345,8 +269,6 @@
 
   <script>
     let draggingNote = null;
-    let isDrawing = false;
-    let canvas, ctx;
 
     function addNote() {
       const text = document.getElementById("new-note").value.trim();
@@ -369,44 +291,38 @@
         </button>
       `;
 
-      let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-
-      note.addEventListener('mousedown', dragMouseDown);
-
-      function dragMouseDown(e) {
-        if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON') return;
-        e.preventDefault();
-
-        pos3 = e.clientX;
-        pos4 = e.clientY;
-
-        document.addEventListener('mousemove', elementDrag);
-        document.addEventListener('mouseup', closeDragElement);
-
-        note.style.opacity = "0.8";
-        note.style.zIndex = "1000";
-      }
-
-      function elementDrag(e) {
-        e.preventDefault();
-
-        pos1 = pos3 - e.clientX;
-        pos2 = pos4 - e.clientY;
-        pos3 = e.clientX;
-        pos4 = e.clientY;
-
-        note.style.top = (note.offsetTop - pos2) + "px";
-        note.style.left = (note.offsetLeft - pos1) + "px";
-      }
-
-      function closeDragElement() {
-        document.removeEventListener('mousemove', elementDrag);
-        document.removeEventListener('mouseup', closeDragElement);
-        note.style.opacity = "1";
-        note.style.zIndex = "";
-      }
+      note.addEventListener('dragstart', dragStart);
+      note.addEventListener('dragend', dragEnd);
+      note.addEventListener('dragover', dragOver);
+      note.addEventListener('drop', dropNote);
 
       document.getElementById("notes-container").appendChild(note);
+    }
+
+    function dragStart(e) {
+      draggingNote = e.target;
+      setTimeout(() => {
+        draggingNote.style.opacity = "0.5"; // Indicate it's being dragged
+      }, 0);
+    }
+
+    function dragEnd() {
+      draggingNote.style.opacity = "1"; // Reset opacity
+      draggingNote = null;
+    }
+
+    function dragOver(e) {
+      e.preventDefault();
+    }
+
+    function dropNote(e) {
+      e.preventDefault();
+      if (draggingNote) {
+        const x = e.clientX - draggingNote.offsetWidth / 2;
+        const y = e.clientY - draggingNote.offsetHeight / 2;
+        draggingNote.style.left = `${x}px`;
+        draggingNote.style.top = `${y}px`;
+      }
     }
 
     function deleteNote(button) {
@@ -420,163 +336,13 @@
     function toggleWhiteboard() {
       const container = document.getElementById("canvas-container");
       container.style.display = container.style.display === "none" ? "block" : "none";
-
-      if (!canvas) {
-        canvas = document.getElementById("whiteboard");
-        ctx = canvas.getContext("2d");
-        initCanvas();
-      }
     }
-
-    let undoStack = [];
-    let startX, startY;
-
-    function initCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-
-      ctx.strokeStyle = "#000000";
-      ctx.lineWidth = 2;
-      ctx.lineCap = "round";
-
-      canvas.addEventListener("mousedown", startDrawing);
-      canvas.addEventListener("mousemove", draw);
-      canvas.addEventListener("mouseup", stopDrawing);
-      canvas.addEventListener("mouseout", stopDrawing);
-
-      document.getElementById("colorPicker").addEventListener("input", (e) => {
-        ctx.strokeStyle = e.target.value;
-      });
-
-      document.getElementById("sizeSlider").addEventListener("input", (e) => {
-        ctx.lineWidth = e.target.value;
-      });
-
-      saveCanvasState();
-    }
-
-    function saveCanvasState() {
-      undoStack.push(canvas.toDataURL());
-      if (undoStack.length > 10) undoStack.shift();
-    }
-
-    function undo() {
-      if (undoStack.length > 1) {
-        undoStack.pop();
-        const img = new Image();
-        img.src = undoStack[undoStack.length - 1];
-        img.onload = () => {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(img, 0, 0);
-        };
-      } else {
-        clearCanvas();
-      }
-    }
-
-    function startDrawing(e) {
-      isDrawing = true;
-      const rect = canvas.getBoundingClientRect();
-      startX = e.clientX - rect.left;
-      startY = e.clientY - rect.top;
-      ctx.beginPath();
-      ctx.moveTo(startX, startY);
-    }
-
-    function draw(e) {
-      if (!isDrawing) return;
-
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const tool = document.getElementById("toolSelect").value;
-
-      ctx.save();
-      ctx.beginPath();
-
-      switch (tool) {
-        case "eraser":
-          const savedColor = ctx.strokeStyle;
-          ctx.strokeStyle = "#ffffff";
-          ctx.lineTo(x, y);
-          ctx.stroke();
-          ctx.strokeStyle = savedColor;
-          break;
-        case "line":
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          const lastState = undoStack[undoStack.length - 1];
-          const img = new Image();
-          img.src = lastState;
-          ctx.drawImage(img, 0, 0);
-          ctx.beginPath();
-          ctx.moveTo(startX, startY);
-          ctx.lineTo(x, y);
-          ctx.stroke();
-          break;
-        case "rectangle":
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          const lastState2 = undoStack[undoStack.length - 1];
-          const img2 = new Image();
-          img2.src = lastState2;
-          ctx.drawImage(img2, 0, 0);
-          ctx.strokeRect(startX, startY, x - startX, y - startY);
-          break;
-        case "circle":
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          const lastState3 = undoStack[undoStack.length - 1];
-          const img3 = new Image();
-          img3.src = lastState3;
-          ctx.drawImage(img3, 0, 0);
-          const radius = Math.sqrt(Math.pow(x - startX, 2) + Math.pow(y - startY, 2));
-          ctx.beginPath();
-          ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
-          ctx.stroke();
-          break;
-        default:
-          ctx.lineTo(x, y);
-          ctx.stroke();
-      }
-
-      ctx.restore();
-    }
-
-    function stopDrawing() {
-      if (!isDrawing) return;
-      isDrawing = false;
-      saveCanvasState();
-    }
-
-    function clearCanvas() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
-
-    document.addEventListener("dragover", function (event) {
-      event.preventDefault();
-      if (draggingNote) {
-        draggingNote.style.top = `${event.clientY - 100}px`;
-        draggingNote.style.left = `${event.clientX - 100}px`;
-      }
-    });
-
-    document.getElementById("new-note").addEventListener("keydown", function (event) {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        addNote();
-      }
-    });
 
     window.addEventListener("load", function () {
       document.getElementById("popup").style.display = "block";
       setTimeout(() => {
         document.getElementById("popup").style.display = "none";
       }, 4000);
-    });
-
-    window.addEventListener("resize", function () {
-      if (canvas) {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-      }
     });
   </script>
 </body>
