@@ -13,41 +13,59 @@
             margin: 0;
             padding: 0;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
             height: 100vh;
-            background: linear-gradient(135deg, #0bb3f0, #42bfd2);
+            background: white;
+            overflow: hidden;
+            position: relative;
         }
-        .container {
-            background-color: rgba(255, 255, 255, 0.9);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            width: 90%;
-            max-width: 600px;
-            box-sizing: border-box;
-            overflow-y: auto;
-            text-align: center;
+        .dark-mode {
+            background: black;
+            color: white;
         }
-        h1, h2 {
-            color: #333;
+        header {
+            width: 100%;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8f9fa;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .dark-mode header {
+            background: #333;
+        }
+        .app-name {
+            font-size: 24px;
+            font-weight: bold;
         }
         .notes {
+            flex: 1;
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
-            justify-content: center;
-            margin-top: 20px;
+            align-items: flex-start;
+            padding: 20px;
+            width: 100%;
+            box-sizing: border-box;
         }
         .note {
-            background-color: #fbff01;
+            background-color: #fff9b1;
             padding: 10px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
             width: 200px;
             height: 200px;
             box-sizing: border-box;
-            position: relative;
+            position: absolute;
+            cursor: grab;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .note:active {
+            cursor: grabbing;
+            transform: scale(1.05);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
         }
         .note textarea {
             width: 100%;
@@ -62,85 +80,124 @@
             border-radius: 8px;
             outline: none;
         }
-        .note button {
+        .dark-mode .note {
+            background-color: #444;
+        }
+        .add-note-container {
             position: absolute;
-            top: 5px;
-            right: 5px;
-            background-color: #dc3545;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            padding: 5px;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            gap: 10px;
         }
-        .note button:hover {
-            background-color: #c82333;
-        }
-        input[type="text"] {
+        .add-note-input {
             padding: 10px;
-            width: calc(100% - 22px);
-            margin-bottom: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            width: 250px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 16px;
             outline: none;
+            transition: border-color 0.2s ease-in-out;
         }
-        button.add-note {
-            padding: 10px 20px;
+        .add-note-input:focus {
+            border-color: #28a745;
+        }
+        .add-note-btn {
+            padding: 10px 15px;
+            border-radius: 8px;
             border: none;
             background-color: #28a745;
-            color: #fff;
-            border-radius: 4px;
+            color: white;
             cursor: pointer;
-            display: block;
-            margin: 0 auto;
+            transition: background-color 0.2s ease-in-out;
         }
-        button.add-note:hover {
+        .add-note-btn:hover {
             background-color: #218838;
+        }
+        .dark-mode-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            transition: transform 0.2s ease-in-out;
+        }
+        .dark-mode-btn:hover {
+            transform: rotate(20deg);
+        }
+        .popup {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Distracted for Eternity</h1>
-        <h2>By Rushil @ Scrapyard Silicon Valley</h2>
-        <input type="text" id="new-note" placeholder="Add a new note">
-        <button class="add-note" onclick="addNote()">Add</button>
-        <div class="notes" id="notes-container"></div>
+    <header>
+        <div class="app-name">Distracted for Eternity</div>
+        <button class="dark-mode-btn" onclick="toggleDarkMode()">🌙</button>
+    </header>
+    <div class="notes" id="notes-container"></div>
+    <div class="add-note-container">
+        <input type="text" id="new-note" class="add-note-input" placeholder="Write a note...">
+        <button class="add-note-btn" onclick="addNote()">+</button>
     </div>
+    <div class="popup" id="popup">Drag notes around! Click the moon to toggle dark mode!</div>
     <script>
-    document.getElementById('new-note').addEventListener('keydown', function(event) {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            addNote();
-        }
-    });
-    </script>
-    <script src="script.js"></script>
-    <script>
+        let draggingNote = null;
         function addNote() {
-            const noteInput = document.getElementById('new-note');
-            const notesContainer = document.getElementById('notes-container');
-            const noteText = noteInput.value.trim();
-
-            if (noteText !== '') {
-                const note = document.createElement('div');
-                note.className = 'note';
-
-                const textarea = document.createElement('textarea');
-                textarea.value = noteText;
-                note.appendChild(textarea);
-
-                const deleteButton = document.createElement('button');
-                deleteButton.innerHTML = 'X';
-                deleteButton.onclick = function() {
-                    notesContainer.removeChild(note);
-                };
-                note.appendChild(deleteButton);
-
-                notesContainer.appendChild(note);
-                noteInput.value = '';
+            const text = document.getElementById("new-note").value.trim();
+            if (text !== "") {
+                createNote(text);
+                document.getElementById("new-note").value = "";
             }
         }
+        function createNote(text = "") {
+            const note = document.createElement("div");
+            note.classList.add("note");
+            note.draggable = true;
+            note.style.top = `${Math.random() * window.innerHeight * 0.5}px`;
+            note.style.left = `${Math.random() * window.innerWidth * 0.5}px`;
+            note.innerHTML = `<textarea>${text}</textarea>`;
+            note.ondragstart = function (event) {
+                draggingNote = event.target;
+                draggingNote.style.opacity = "0.5";
+            };
+            note.ondragend = function (event) {
+                draggingNote.style.opacity = "1";
+                draggingNote.style.top = `${event.clientY}px`;
+                draggingNote.style.left = `${event.clientX}px`;
+                draggingNote = null;
+            };
+            document.getElementById("notes-container").appendChild(note);
+        }
+        document.addEventListener("dragover", function (event) {
+            event.preventDefault();
+            if (draggingNote) {
+                draggingNote.style.top = `${event.clientY}px`;
+                draggingNote.style.left = `${event.clientX}px`;
+            }
+        });
+        function toggleDarkMode() {
+            document.body.classList.toggle("dark-mode");
+        }
+        window.addEventListener("load", function () {
+            document.getElementById("popup").style.display = "block";
+            setTimeout(() => {
+                document.getElementById("popup").style.display = "none";
+            }, 4000);
+        });
+        document.getElementById("new-note").addEventListener("keydown", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                addNote();
+            }
+        });
     </script>
 </body>
 </html>
