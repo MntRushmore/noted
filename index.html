@@ -356,8 +356,9 @@
 
   <div class="add-note-container">
     <input type="text" id="new-note" class="add-note-input" placeholder="Write a note...">
-    <button class="btn" onclick="addNote()">
+    <button class="btn" id="add-note-btn">
       <i class="fas fa-plus"></i> Add Note
+    </button>
     </button>
   </div>
 
@@ -640,6 +641,8 @@ window.addEventListener("load", function () {
 
   loadNotesFromLocalStorage();
   loadCanvasState();
+
+  document.getElementById("add-note-btn").addEventListener("click", addNote);
 });
 
 window.addEventListener("resize", function () {
