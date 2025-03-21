@@ -154,11 +154,13 @@
       height: 220px;
       box-sizing: border-box;
       position: absolute;
-      transition: box-shadow 0.2s ease, transform 0.1s ease;
+      transition: box-shadow 0.2s ease, transform 0.1s ease, width 0.3s ease, height 0.3s ease;
       display: flex;
       flex-direction: column;
       cursor: grab;
       will-change: transform, left, top;
+      resize: both;
+      overflow: auto;
     }
 
     .note:active {
