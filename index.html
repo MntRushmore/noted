@@ -331,6 +331,9 @@
       <button class="tool-btn" onclick="toggleDarkMode()" title="Dark Mode">
         <i class="fas fa-moon"></i>
       </button>
+      <button class="tool-btn" onclick="clearAllNotes()" title="Clear All Notes">
+        <i class="fas fa-trash"></i> Clear All
+      </button>
     </div>
   </header>
 
@@ -373,11 +376,31 @@
     let isDrawing = false;
     let canvas, ctx;
 
+    function saveNotesToLocalStorage() {
+      const notes = [];
+      document.querySelectorAll('.note').forEach(note => {
+        const text = note.querySelector('textarea').value;
+        const position = { left: note.style.left, top: note.style.top };
+        notes.push({ text, position });
+      });
+      localStorage.setItem('notes', JSON.stringify(notes));
+    }
+
+    function loadNotesFromLocalStorage() {
+      const savedNotes = JSON.parse(localStorage.getItem('notes') || '[]');
+      savedNotes.forEach(noteData => {
+        const note = createNote(noteData.text);
+        note.style.left = noteData.position.left;
+        note.style.top = noteData.position.top;
+      });
+    }
+
     function addNote() {
       const text = document.getElementById("new-note").value.trim();
       if (text !== "") {
         createNote(text);
         document.getElementById("new-note").value = "";
+        saveNotesToLocalStorage();
       }
     }
 
@@ -395,41 +418,36 @@
         </button>
       `;
 
-      let isDragging = false;
-      let initialX, initialY, initialNoteX, initialNoteY;
-      let activeTextarea = null;
-
       note.addEventListener('mousedown', startDrag);
+      document.getElementById("notes-container").appendChild(note);
+      return note;
+    }
 
-      const textarea = note.querySelector("textarea");
-      textarea.addEventListener('mousedown', function (e) {
-        activeTextarea = this;
-        e.stopPropagation();
-      });
+    function deleteNote(button) {
+      button.parentElement.remove();
+      saveNotesToLocalStorage();
+    }
 
-      textarea.addEventListener('blur', function () {
-        activeTextarea = null;
-      });
-
-      function startDrag(e) {
-        if (e.target.tagName === 'TEXTAREA' || e.target.classList.contains('delete-note-btn')) {
-          return;
-        }
-
-        e.preventDefault();
-        isDragging = true;
-
-        initialX = e.clientX;
-        initialY = e.clientY;
-        initialNoteX = note.offsetLeft;
-        initialNoteY = note.offsetTop;
-
-        note.style.zIndex = "1000";
-        note.style.opacity = "0.95";
-
-        document.addEventListener('mousemove', dragNote);
-        document.addEventListener('mouseup', stopDrag);
+    function startDrag(e) {
+      if (e.target.tagName === 'TEXTAREA' || e.target.classList.contains('delete-note-btn')) {
+        return;
       }
+
+      e.preventDefault();
+      let isDragging = true;
+      let initialX, initialY, initialNoteX, initialNoteY;
+      const note = e.target.closest('.note');
+
+      initialX = e.clientX;
+      initialY = e.clientY;
+      initialNoteX = note.offsetLeft;
+      initialNoteY = note.offsetTop;
+
+      note.style.zIndex = "1000";
+      note.style.opacity = "0.95";
+
+      document.addEventListener('mousemove', dragNote);
+      document.addEventListener('mouseup', stopDrag);
 
       function dragNote(e) {
         if (!isDragging) return;
@@ -443,9 +461,7 @@
         });
       }
 
-      function stopDrag(e) {
-        if (!isDragging) return;
-
+      function stopDrag() {
         isDragging = false;
         note.style.opacity = "1";
 
@@ -458,21 +474,13 @@
         document.removeEventListener('mousemove', dragNote);
         document.removeEventListener('mouseup', stopDrag);
 
-        const allNotes = document.querySelectorAll('.note');
-        allNotes.forEach(n => {
-          if (n !== note && parseInt(n.style.zIndex) > 1) {
-            n.style.zIndex = Math.max(1, parseInt(n.style.zIndex) - 1);
-          }
-        });
-        note.style.zIndex = "100";
+        saveNotesToLocalStorage();
       }
-
-      document.getElementById("notes-container").appendChild(note);
-      return note;
     }
 
-    function deleteNote(button) {
-      button.parentElement.remove();
+    function clearAllNotes() {
+      document.getElementById('notes-container').innerHTML = '';
+      localStorage.removeItem('notes');
     }
 
     function toggleDarkMode() {
@@ -491,7 +499,6 @@
     }
 
     let undoStack = [];
-    let startX, startY;
 
     function initCanvas() {
       canvas.width = window.innerWidth;
@@ -520,6 +527,19 @@
     function saveCanvasState() {
       undoStack.push(canvas.toDataURL());
       if (undoStack.length > 10) undoStack.shift();
+      localStorage.setItem('whiteboardState', JSON.stringify(undoStack));
+    }
+
+    function loadCanvasState() {
+      const savedState = JSON.parse(localStorage.getItem('whiteboardState') || '[]');
+      if (savedState.length > 0) {
+        const img = new Image();
+        img.src = savedState[savedState.length - 1];
+        img.onload = () => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0);
+        };
+      }
     }
 
     function undo() {
@@ -539,8 +559,8 @@
     function startDrawing(e) {
       isDrawing = true;
       const rect = canvas.getBoundingClientRect();
-      startX = e.clientX - rect.left;
-      startY = e.clientY - rect.top;
+      const startX = e.clientX - rect.left;
+      const startY = e.clientY - rect.top;
       ctx.beginPath();
       ctx.moveTo(startX, startY);
     }
@@ -612,7 +632,6 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
 
-
     document.getElementById("new-note").addEventListener("keydown", function (event) {
       if (event.key === "Enter") {
         event.preventDefault();
@@ -620,11 +639,16 @@
       }
     });
 
+    
+
     window.addEventListener("load", function () {
       document.getElementById("popup").style.display = "block";
       setTimeout(() => {
         document.getElementById("popup").style.display = "none";
       }, 4000);
+
+      loadNotesFromLocalStorage();
+      loadCanvasState();
     });
 
     window.addEventListener("resize", function () {
