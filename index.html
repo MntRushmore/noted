@@ -125,15 +125,6 @@
       background: #333;
     }
 
-    .color-picker {
-      width: 30px;
-      height: 30px;
-      padding: 0;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
     .notes {
       flex: 1;
       display: flex;
@@ -371,292 +362,293 @@
   </div>
 
   <div class="popup" id="popup">Drag notes around! Use the toolbar for more features!</div>
+  
+<script>
+  let isDrawing = false;
+let canvas, ctx;
 
-  <script>
-    let isDrawing = false;
-    let canvas, ctx;
+function createNote(text = "") {
+  const note = document.createElement("div");
+  note.classList.add("note");
+  note.style.top = `${Math.random() * (window.innerHeight - 300)}px`;
+  note.style.left = `${Math.random() * (window.innerWidth - 250)}px`;
+  note.style.zIndex = "1";
+  note.innerHTML = `
+    <div class="note-header"></div>
+    <textarea>${text}</textarea>
+    <button class="delete-note-btn" onclick="deleteNote(this)">
+      <i class="fas fa-times"></i>
+    </button>
+  `;
 
-    function saveNotesToLocalStorage() {
-      const notes = [];
-      document.querySelectorAll('.note').forEach(note => {
-        const text = note.querySelector('textarea').value;
-        const position = { left: note.style.left, top: note.style.top };
-        notes.push({ text, position });
-      });
-      localStorage.setItem('notes', JSON.stringify(notes));
-    }
+  note.addEventListener('mousedown', startDrag);
+  document.getElementById("notes-container").appendChild(note);
+  return note;
+}
 
-    function loadNotesFromLocalStorage() {
-      const savedNotes = JSON.parse(localStorage.getItem('notes') || '[]');
-      savedNotes.forEach(noteData => {
-        const note = createNote(noteData.text);
-        note.style.left = noteData.position.left;
-        note.style.top = noteData.position.top;
-      });
-    }
+function saveNotesToLocalStorage() {
+  const notes = [];
+  document.querySelectorAll('.note').forEach(note => {
+    const text = note.querySelector('textarea').value;
+    const position = { left: note.style.left, top: note.style.top };
+    const color = note.style.backgroundColor;
+    notes.push({ text, position, color });
+  });
+  localStorage.setItem('notes', JSON.stringify(notes));
+}
 
-    function addNote() {
-      const text = document.getElementById("new-note").value.trim();
-      if (text !== "") {
-        createNote(text);
-        document.getElementById("new-note").value = "";
-        saveNotesToLocalStorage();
-      }
-    }
+function loadNotesFromLocalStorage() {
+  const savedNotes = JSON.parse(localStorage.getItem('notes') || '[]');
+  savedNotes.forEach(noteData => {
+    const note = createNote(noteData.text);
+    note.style.left = noteData.position.left;
+    note.style.top = noteData.position.top;
+    note.style.backgroundColor = noteData.color; // Set background color from saved data
+  });
+}
 
-    function createNote(text = "") {
-      const note = document.createElement("div");
-      note.classList.add("note");
-      note.style.top = `${Math.random() * (window.innerHeight - 300)}px`;
-      note.style.left = `${Math.random() * (window.innerWidth - 250)}px`;
-      note.style.zIndex = "1";
-      note.innerHTML = `
-        <div class="note-header"></div>
-        <textarea>${text}</textarea>
-        <button class="delete-note-btn" onclick="deleteNote(this)">
-          <i class="fas fa-times"></i>
-        </button>
-      `;
+function addNote() {
+  const text = document.getElementById("new-note").value.trim();
+  if (text !== "") {
+    createNote(text);
+    document.getElementById("new-note").value = "";
+    saveNotesToLocalStorage();
+  }
+}
 
-      note.addEventListener('mousedown', startDrag);
-      document.getElementById("notes-container").appendChild(note);
-      return note;
-    }
+function deleteNote(button) {
+  button.parentElement.remove();
+  saveNotesToLocalStorage();
+}
 
-    function deleteNote(button) {
-      button.parentElement.remove();
-      saveNotesToLocalStorage();
-    }
+function startDrag(e) {
+  if (e.target.tagName === 'TEXTAREA' || e.target.classList.contains('delete-note-btn')) {
+    return;
+  }
 
-    function startDrag(e) {
-      if (e.target.tagName === 'TEXTAREA' || e.target.classList.contains('delete-note-btn')) {
-        return;
-      }
+  e.preventDefault();
+  let isDragging = true;
+  let initialX, initialY, initialNoteX, initialNoteY;
+  const note = e.target.closest('.note');
 
-      e.preventDefault();
-      let isDragging = true;
-      let initialX, initialY, initialNoteX, initialNoteY;
-      const note = e.target.closest('.note');
+  initialX = e.clientX;
+  initialY = e.clientY;
+  initialNoteX = note.offsetLeft;
+  initialNoteY = note.offsetTop;
 
-      initialX = e.clientX;
-      initialY = e.clientY;
-      initialNoteX = note.offsetLeft;
-      initialNoteY = note.offsetTop;
+  note.style.zIndex = "1000";
+  note.style.opacity = "0.95";
 
-      note.style.zIndex = "1000";
-      note.style.opacity = "0.95";
+  document.addEventListener('mousemove', dragNote);
+  document.addEventListener('mouseup', stopDrag);
 
-      document.addEventListener('mousemove', dragNote);
-      document.addEventListener('mouseup', stopDrag);
+  function dragNote(e) {
+    if (!isDragging) return;
 
-      function dragNote(e) {
-        if (!isDragging) return;
+    requestAnimationFrame(() => {
+      const dx = e.clientX - initialX;
+      const dy = e.clientY - initialY;
 
-        requestAnimationFrame(() => {
-          const dx = e.clientX - initialX;
-          const dy = e.clientY - initialY;
+      note.style.left = `${initialNoteX + dx}px`;
+      note.style.top = `${initialNoteY + dy}px`;
+    });
+  }
 
-          note.style.left = `${initialNoteX + dx}px`;
-          note.style.top = `${initialNoteY + dy}px`;
-        });
-      }
+  function stopDrag() {
+    isDragging = false;
+    note.style.opacity = "1";
 
-      function stopDrag() {
-        isDragging = false;
-        note.style.opacity = "1";
+    const rect = note.getBoundingClientRect();
+    if (rect.left < 0) note.style.left = "0px";
+    if (rect.top < 0) note.style.top = "0px";
+    if (rect.right > window.innerWidth) note.style.left = `${window.innerWidth - rect.width}px`;
+    if (rect.bottom > window.innerHeight) note.style.top = `${window.innerHeight - rect.height}px`;
 
-        const rect = note.getBoundingClientRect();
-        if (rect.left < 0) note.style.left = "0px";
-        if (rect.top < 0) note.style.top = "0px";
-        if (rect.right > window.innerWidth) note.style.left = `${window.innerWidth - rect.width}px`;
-        if (rect.bottom > window.innerHeight) note.style.top = `${window.innerHeight - rect.height}px`;
+    document.removeEventListener('mousemove', dragNote);
+    document.removeEventListener('mouseup', stopDrag);
 
-        document.removeEventListener('mousemove', dragNote);
-        document.removeEventListener('mouseup', stopDrag);
+    saveNotesToLocalStorage();
+  }
+}
 
-        saveNotesToLocalStorage();
-      }
-    }
+function clearAllNotes() {
+  document.getElementById('notes-container').innerHTML = '';
+  localStorage.removeItem('notes');
+}
 
-    function clearAllNotes() {
-      document.getElementById('notes-container').innerHTML = '';
-      localStorage.removeItem('notes');
-    }
+function toggleDarkMode() {
+  document.body.classList.toggle("dark-mode");
+}
 
-    function toggleDarkMode() {
-      document.body.classList.toggle("dark-mode");
-    }
+function toggleWhiteboard() {
+  const container = document.getElementById("canvas-container");
+  container.style.display = container.style.display === "none" ? "block" : "none";
 
-    function toggleWhiteboard() {
-      const container = document.getElementById("canvas-container");
-      container.style.display = container.style.display === "none" ? "block" : "none";
+  if (!canvas) {
+    canvas = document.getElementById("whiteboard");
+    ctx = canvas.getContext("2d");
+    initCanvas();
+  }
+}
 
-      if (!canvas) {
-        canvas = document.getElementById("whiteboard");
-        ctx = canvas.getContext("2d");
-        initCanvas();
-      }
-    }
+let undoStack = [];
 
-    let undoStack = [];
+function initCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
 
-    function initCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+  ctx.strokeStyle = "#000000";
+  ctx.lineWidth = 2;
+  ctx.lineCap = "round";
 
-      ctx.strokeStyle = "#000000";
-      ctx.lineWidth = 2;
-      ctx.lineCap = "round";
+  canvas.addEventListener("mousedown", startDrawing);
+  canvas.addEventListener("mousemove", draw);
+  canvas.addEventListener("mouseup", stopDrawing);
+  canvas.addEventListener("mouseout", stopDrawing);
 
-      canvas.addEventListener("mousedown", startDrawing);
-      canvas.addEventListener("mousemove", draw);
-      canvas.addEventListener("mouseup", stopDrawing);
-      canvas.addEventListener("mouseout", stopDrawing);
+  document.getElementById("colorPicker").addEventListener("input", (e) => {
+    ctx.strokeStyle = e.target.value;
+  });
 
-      document.getElementById("colorPicker").addEventListener("input", (e) => {
-        ctx.strokeStyle = e.target.value;
-      });
+  document.getElementById("sizeSlider").addEventListener("input", (e) => {
+    ctx.lineWidth = e.target.value;
+  });
 
-      document.getElementById("sizeSlider").addEventListener("input", (e) => {
-        ctx.lineWidth = e.target.value;
-      });
+  saveCanvasState();
+}
 
-      saveCanvasState();
-    }
+function saveCanvasState() {
+  undoStack.push(canvas.toDataURL());
+  if (undoStack.length > 10) undoStack.shift();
+  localStorage.setItem('whiteboardState', JSON.stringify(undoStack));
+}
 
-    function saveCanvasState() {
-      undoStack.push(canvas.toDataURL());
-      if (undoStack.length > 10) undoStack.shift();
-      localStorage.setItem('whiteboardState', JSON.stringify(undoStack));
-    }
+function loadCanvasState() {
+  const savedState = JSON.parse(localStorage.getItem('whiteboardState') || '[]');
+  if (savedState.length > 0) {
+    const img = new Image();
+    img.src = savedState[savedState.length - 1];
+    img.onload = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+    };
+  }
+}
 
-    function loadCanvasState() {
-      const savedState = JSON.parse(localStorage.getItem('whiteboardState') || '[]');
-      if (savedState.length > 0) {
-        const img = new Image();
-        img.src = savedState[savedState.length - 1];
-        img.onload = () => {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(img, 0, 0);
-        };
-      }
-    }
+function undo() {
+  if (undoStack.length > 1) {
+    undoStack.pop();
+    const img = new Image();
+    img.src = undoStack[undoStack.length - 1];
+    img.onload = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+    };
+  } else {
+    clearCanvas();
+  }
+}
 
-    function undo() {
-      if (undoStack.length > 1) {
-        undoStack.pop();
-        const img = new Image();
-        img.src = undoStack[undoStack.length - 1];
-        img.onload = () => {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(img, 0, 0);
-        };
-      } else {
-        clearCanvas();
-      }
-    }
+function startDrawing(e) {
+  isDrawing = true;
+  const rect = canvas.getBoundingClientRect();
+  const startX = e.clientX - rect.left;
+  const startY = e.clientY - rect.top;
+  ctx.beginPath();
+  ctx.moveTo(startX, startY);
+}
 
-    function startDrawing(e) {
-      isDrawing = true;
-      const rect = canvas.getBoundingClientRect();
-      const startX = e.clientX - rect.left;
-      const startY = e.clientY - rect.top;
+function draw(e) {
+  if (!isDrawing) return;
+
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const tool = document.getElementById("toolSelect").value;
+
+  ctx.save();
+  ctx.beginPath();
+
+  switch (tool) {
+    case "eraser":
+      const savedColor = ctx.strokeStyle;
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      ctx.strokeStyle = savedColor;
+      break;
+    case "line":
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const lastState = undoStack[undoStack.length - 1];
+      const img = new Image();
+      img.src = lastState;
+      ctx.drawImage(img, 0, 0);
       ctx.beginPath();
       ctx.moveTo(startX, startY);
-    }
-
-    function draw(e) {
-      if (!isDrawing) return;
-
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const tool = document.getElementById("toolSelect").value;
-
-      ctx.save();
-      ctx.beginPath();
-
-      switch (tool) {
-        case "eraser":
-          const savedColor = ctx.strokeStyle;
-          ctx.strokeStyle = "#ffffff";
-          ctx.lineTo(x, y);
-          ctx.stroke();
-          ctx.strokeStyle = savedColor;
-          break;
-        case "line":
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          const lastState = undoStack[undoStack.length - 1];
-          const img = new Image();
-          img.src = lastState;
-          ctx.drawImage(img, 0, 0);
-          ctx.beginPath();
-          ctx.moveTo(startX, startY);
-          ctx.lineTo(x, y);
-          ctx.stroke();
-          break;
-        case "rectangle":
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          const lastState2 = undoStack[undoStack.length - 1];
-          const img2 = new Image();
-          img2.src = lastState2;
-          ctx.drawImage(img2, 0, 0);
-          ctx.strokeRect(startX, startY, x - startX, y - startY);
-          break;
-        case "circle":
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          const lastState3 = undoStack[undoStack.length - 1];
-          const img3 = new Image();
-          img3.src = lastState3;
-          ctx.drawImage(img3, 0, 0);
-          const radius = Math.sqrt(Math.pow(x - startX, 2) + Math.pow(y - startY, 2));
-          ctx.beginPath();
-          ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
-          ctx.stroke();
-          break;
-        default:
-          ctx.lineTo(x, y);
-          ctx.stroke();
-      }
-
-      ctx.restore();
-    }
-
-    function stopDrawing() {
-      if (!isDrawing) return;
-      isDrawing = false;
-      saveCanvasState();
-    }
-
-    function clearCanvas() {
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      break;
+    case "rectangle":
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
+      const lastState2 = undoStack[undoStack.length - 1];
+      const img2 = new Image();
+      img2.src = lastState2;
+      ctx.drawImage(img2, 0, 0);
+      ctx.strokeRect(startX, startY, x - startX, y - startY);
+      break;
+    case "circle":
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const lastState3 = undoStack[undoStack.length - 1];
+      const img3 = new Image();
+      img3.src = lastState3;
+      ctx.drawImage(img3, 0, 0);
+      const radius = Math.sqrt(Math.pow(x - startX, 2) + Math.pow(y - startY, 2));
+      ctx.beginPath();
+      ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
+      ctx.stroke();
+      break;
+    default:
+      ctx.lineTo(x, y);
+      ctx.stroke();
+  }
 
-    document.getElementById("new-note").addEventListener("keydown", function (event) {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        addNote();
-      }
-    });
+  ctx.restore();
+}
 
+function stopDrawing() {
+  if (!isDrawing) return;
+  isDrawing = false;
+  saveCanvasState();
+}
 
-    window.addEventListener("load", function () {
-      document.getElementById("popup").style.display = "block";
-      setTimeout(() => {
-        document.getElementById("popup").style.display = "none";
-      }, 4000);
+function clearCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
 
-      loadNotesFromLocalStorage();
-      loadCanvasState();
-    });
+document.getElementById("new-note").addEventListener("keydown", function (event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    addNote();
+  }
+});
 
-    window.addEventListener("resize", function () {
-      if (canvas) {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-      }
-    });
-  </script>
+window.addEventListener("load", function () {
+  document.getElementById("popup").style.display = "block";
+  setTimeout(() => {
+    document.getElementById("popup").style.display = "none";
+  }, 4000);
+
+  loadNotesFromLocalStorage();
+  loadCanvasState();
+});
+
+window.addEventListener("resize", function () {
+  if (canvas) {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+});
+</script>
 </body>
 
 </html>
