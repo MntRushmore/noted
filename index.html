@@ -153,19 +153,34 @@
       height: 220px;
       box-sizing: border-box;
       position: absolute;
+      transition: box-shadow 0.2s ease, transform 0.1s ease;
+      display: flex;
+      flex-direction: column;
       cursor: grab;
-      transition: all 0.3s ease;
+      will-change: transform, left, top;
     }
 
     .note:active {
       cursor: grabbing;
-      transform: scale(1.05) rotate(2deg);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+      transform: scale(1.02);
+    }
+
+    .note-header {
+      height: 12px;
+      margin: -15px -15px 5px -15px;
+      padding: 8px 15px;
+      border-radius: 15px 15px 0 0;
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .note-header:hover {
+      background-color: rgba(0, 0, 0, 0.1);
     }
 
     .note textarea {
       width: 100%;
-      height: calc(100% - 20px);
+      height: calc(100% - 25px);
       border: none;
       background: none;
       resize: none;
@@ -173,9 +188,17 @@
       font-size: 14px;
       line-height: 1.5;
       color: #333;
-      padding: 10px;
+      padding: 5px;
       border-radius: 8px;
       outline: none;
+      flex-grow: 1;
+      cursor: text;
+      z-index: 2;
+      position: relative;
+    }
+
+    .note textarea:focus {
+      background-color: rgba(255, 255, 255, 0.4);
     }
 
     .dark-mode .note {
@@ -344,7 +367,6 @@
   <div class="popup" id="popup">Drag notes around! Use the toolbar for more features!</div>
 
   <script>
-    let draggingNote = null;
     let isDrawing = false;
     let canvas, ctx;
 
@@ -359,54 +381,91 @@
     function createNote(text = "") {
       const note = document.createElement("div");
       note.classList.add("note");
-      note.draggable = true;
       note.style.top = `${Math.random() * (window.innerHeight - 300)}px`;
       note.style.left = `${Math.random() * (window.innerWidth - 250)}px`;
+      note.style.zIndex = "1";
       note.innerHTML = `
+        <div class="note-header"></div>
         <textarea>${text}</textarea>
         <button class="delete-note-btn" onclick="deleteNote(this)">
           <i class="fas fa-times"></i>
         </button>
       `;
 
-      let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+      let isDragging = false;
+      let initialX, initialY, initialNoteX, initialNoteY;
+      let activeTextarea = null;
 
-      note.addEventListener('mousedown', dragMouseDown);
+      note.addEventListener('mousedown', startDrag);
 
-      function dragMouseDown(e) {
-        if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON') return;
+      const textarea = note.querySelector("textarea");
+      textarea.addEventListener('mousedown', function (e) {
+        activeTextarea = this;
+        e.stopPropagation();
+      });
+
+      textarea.addEventListener('blur', function () {
+        activeTextarea = null;
+      });
+
+      function startDrag(e) {
+        if (e.target.tagName === 'TEXTAREA' || e.target.classList.contains('delete-note-btn')) {
+          return;
+        }
+
         e.preventDefault();
+        isDragging = true;
 
-        pos3 = e.clientX;
-        pos4 = e.clientY;
+        initialX = e.clientX;
+        initialY = e.clientY;
+        initialNoteX = note.offsetLeft;
+        initialNoteY = note.offsetTop;
 
-        document.addEventListener('mousemove', elementDrag);
-        document.addEventListener('mouseup', closeDragElement);
-
-        note.style.opacity = "0.8";
         note.style.zIndex = "1000";
+        note.style.opacity = "0.95";
+
+        document.addEventListener('mousemove', dragNote);
+        document.addEventListener('mouseup', stopDrag);
       }
 
-      function elementDrag(e) {
-        e.preventDefault();
+      function dragNote(e) {
+        if (!isDragging) return;
 
-        pos1 = pos3 - e.clientX;
-        pos2 = pos4 - e.clientY;
-        pos3 = e.clientX;
-        pos4 = e.clientY;
+        requestAnimationFrame(() => {
+          const dx = e.clientX - initialX;
+          const dy = e.clientY - initialY;
 
-        note.style.top = (note.offsetTop - pos2) + "px";
-        note.style.left = (note.offsetLeft - pos1) + "px";
+          note.style.left = `${initialNoteX + dx}px`;
+          note.style.top = `${initialNoteY + dy}px`;
+        });
       }
 
-      function closeDragElement() {
-        document.removeEventListener('mousemove', elementDrag);
-        document.removeEventListener('mouseup', closeDragElement);
+      function stopDrag(e) {
+        if (!isDragging) return;
+
+        isDragging = false;
         note.style.opacity = "1";
-        note.style.zIndex = "";
+
+        const rect = note.getBoundingClientRect();
+        if (rect.left < 0) note.style.left = "0px";
+        if (rect.top < 0) note.style.top = "0px";
+        if (rect.right > window.innerWidth) note.style.left = `${window.innerWidth - rect.width}px`;
+        if (rect.bottom > window.innerHeight) note.style.top = `${window.innerHeight - rect.height}px`;
+
+        document.removeEventListener('mousemove', dragNote);
+        document.removeEventListener('mouseup', stopDrag);
+
+        const allNotes = document.querySelectorAll('.note');
+        allNotes.forEach(n => {
+          if (n !== note && parseInt(n.style.zIndex) > 1) {
+            n.style.zIndex = Math.max(1, parseInt(n.style.zIndex) - 1);
+          }
+        });
+        note.style.zIndex = "100";
       }
 
       document.getElementById("notes-container").appendChild(note);
+      return note;
     }
 
     function deleteNote(button) {
@@ -550,13 +609,6 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
 
-    document.addEventListener("dragover", function (event) {
-      event.preventDefault();
-      if (draggingNote) {
-        draggingNote.style.top = `${event.clientY - 100}px`;
-        draggingNote.style.left = `${event.clientX - 100}px`;
-      }
-    });
 
     document.getElementById("new-note").addEventListener("keydown", function (event) {
       if (event.key === "Enter") {
