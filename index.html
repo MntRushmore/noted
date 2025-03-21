@@ -403,7 +403,7 @@ function loadNotesFromLocalStorage() {
     const note = createNote(noteData.text);
     note.style.left = noteData.position.left;
     note.style.top = noteData.position.top;
-    note.style.backgroundColor = noteData.color; // Set background color from saved data
+    note.style.backgroundColor = noteData.color;
   });
 }
 
