@@ -11,7 +11,34 @@ class NotesManager {
     this.initialX = 0;
     this.initialY = 0;
     this.initialNoteX = 0;
-    this.initialNoteY = 0;
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      const titleInput = document.getElementById('new-note-title');
+      const textInput = document.getElementById('new-note');
+      const categorySelect = document.getElementById('note-category');
+      const colorInput = document.getElementById('note-color');
+      
+      const title = titleInput.value.trim();
+      const text = textInput.value.trim();
+      
+      if (title === '' && text === '') {
+        Utils.showToast('Please enter a title or text for your note');
+        return;
+      }
+      
+      this.createNote(
+        title, 
+        text, 
+        categorySelect.value, 
+        colorInput.value
+      );
+      
+      titleInput.value = '';
+      textInput.value = '';
+      
+      Utils.showToast('Note added');
+      }
+    });
     
     this.loadNotes();
     this.setupEventListeners();
