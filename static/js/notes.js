@@ -2,7 +2,7 @@
 class NotesManager {
   constructor() {
     this.notes = [];
-    this.categories = ['work', 'personal', 'ideas'];
+    this.categories = ['Work', 'Personal', 'Other'];
     this.currentCategory = 'all';
     this.container = document.getElementById('notes-container');
     this.noteTemplate = document.getElementById('note-template');
