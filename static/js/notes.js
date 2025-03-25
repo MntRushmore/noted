@@ -11,6 +11,9 @@ class NotesManager {
     this.initialX = 0;
     this.initialY = 0;
     this.initialNoteX = 0;
+    this.dragMove = this.dragMove.bind(this);
+    this.stopDrag = this.stopDrag.bind(this);
+
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         const titleInput = document.getElementById('new-note-title');
