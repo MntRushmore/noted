@@ -140,3 +140,8 @@ class UI {
     });
   }
 }
+// Fun stuff soon to come!
+//  - A whiteboard for drawing and taking notes
+//  - A simple text editor for writing notes
+//  - A to-do list for managing tasks
+//  - A calendar for scheduling events
