@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   window.whiteboard = new Whiteboard();
   
   setTimeout(() => {
-    Utils.showToast('Welcome to Noted.it! Create and organize your notes.');
+    Utils.showToast('Welcome to Noted! Create and organize your notes.');
   }, 1000);
   
   document.addEventListener('keydown', (e) => {
