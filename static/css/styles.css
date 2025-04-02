@@ -349,6 +349,8 @@ main {
   transform: scale(1.02);
   transition: none;
   z-index: 1000 !important;
+  will-change: left, top;
+  pointer-events: none;
 }
 
 .note:active {

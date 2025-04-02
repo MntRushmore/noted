@@ -227,13 +227,9 @@ class NotesManager {
     const scrollTop = notesArea.scrollTop;
     
     requestAnimationFrame(() => {
-      // Calculate position based on mouse position minus the offset within the note
-      const newX = e.clientX - this.offsetX + scrollLeft;
-      const newY = e.clientY - this.offsetY + scrollTop;
-      
-      // Update note position
-      this.dragNote.style.left = `${newX}px`;
-      this.dragNote.style.top = `${newY}px`;
+      // Update note position directly using the mouse position and offset
+      this.dragNote.style.left = `${e.clientX - this.offsetX + scrollLeft}px`;
+      this.dragNote.style.top = `${e.clientY - this.offsetY + scrollTop}px`;
     });
   }
   
@@ -330,13 +326,9 @@ class NotesManager {
     const scrollTop = notesArea.scrollTop;
     
     requestAnimationFrame(() => {
-      // Calculate position based on touch position minus the offset within the note
-      const newX = touch.clientX - this.offsetX + scrollLeft;
-      const newY = touch.clientY - this.offsetY + scrollTop;
-      
-      // Update note position
-      this.dragNote.style.left = `${newX}px`;
-      this.dragNote.style.top = `${newY}px`;
+      // Update note position directly using the touch position and offset
+      this.dragNote.style.left = `${touch.clientX - this.offsetX + scrollLeft}px`;
+      this.dragNote.style.top = `${touch.clientY - this.offsetY + scrollTop}px`;
     });
   }
   
