@@ -67,9 +67,26 @@ class NotesManager {
       ? this.notes 
       : this.notes.filter(note => note.category === this.currentCategory);
     
-    filteredNotes.forEach(note => {
+    // Sort by z-index or pinned status to maintain proper layering
+    const sortedNotes = [...filteredNotes].sort((a, b) => {
+      // Pinned notes should appear on top
+      if (a.pinned && !b.pinned) return 1;
+      if (!a.pinned && b.pinned) return -1;
+      return 0;
+    });
+    
+    sortedNotes.forEach(note => {
       this.renderNote(note);
     });
+    
+    // If in grid view, reset position to relative for proper layout
+    if (document.querySelector('.notes-area').classList.contains('view-list')) {
+      document.querySelectorAll('.note').forEach(note => {
+        note.style.position = 'relative';
+        note.style.left = 'auto';
+        note.style.top = 'auto';
+      });
+    }
   }
   
 
@@ -79,6 +96,14 @@ class NotesManager {
     
     noteElement.id = note.id;
     noteElement.style.backgroundColor = note.color || '#fff9b1';
+    
+    // Apply saved position if available
+    if (note.position) {
+      noteElement.style.position = 'absolute';
+      noteElement.style.left = note.position.left;
+      noteElement.style.top = note.position.top;
+      noteElement.style.zIndex = '5';
+    }
     
     const titleElement = noteElement.querySelector('.note-title');
     titleElement.textContent = note.title || '';
@@ -96,11 +121,18 @@ class NotesManager {
       categoryElement.style.display = 'none';
     }
     
+    // Make entire note draggable, not just the handle
+    noteElement.addEventListener('mousedown', this.startDrag.bind(this));
+    
+    // Add a specific handle for better UX
     const dragHandle = noteElement.querySelector('.note-drag-handle');
     dragHandle.addEventListener('mousedown', this.startDrag.bind(this));
     
     const deleteButton = noteElement.querySelector('.delete-note');
     deleteButton.addEventListener('click', () => this.deleteNote(note.id));
+    
+    titleElement.addEventListener('mousedown', (e) => e.stopPropagation());
+    contentElement.addEventListener('mousedown', (e) => e.stopPropagation());
     
     titleElement.addEventListener('input', Utils.debounce(() => {
       this.updateNoteContent(note.id, 'title', titleElement.textContent);
@@ -111,7 +143,8 @@ class NotesManager {
     }, 500));
     
     const colorButton = noteElement.querySelector('.change-color');
-    colorButton.addEventListener('click', () => {
+    colorButton.addEventListener('click', (e) => {
+      e.stopPropagation();
       const newColor = Utils.getRandomPastelColor();
       noteElement.style.backgroundColor = newColor;
       this.updateNoteContent(note.id, 'color', newColor);
@@ -123,7 +156,8 @@ class NotesManager {
       noteElement.style.boxShadow = '0 0 0 3px var(--primary-color)';
     }
     
-    pinButton.addEventListener('click', () => {
+    pinButton.addEventListener('click', (e) => {
+      e.stopPropagation();
       const isPinned = this.togglePinNote(note.id);
       pinButton.classList.toggle('active', isPinned);
       noteElement.style.boxShadow = isPinned ? 
@@ -148,14 +182,21 @@ class NotesManager {
     this.initialNoteX = rect.left;
     this.initialNoteY = rect.top;
     
+    // Set the note to be positioned absolutely if it isn't already
+    if (noteElement.style.position !== 'absolute') {
+      noteElement.style.position = 'absolute';
+      noteElement.style.left = `${rect.left}px`;
+      noteElement.style.top = `${rect.top}px`;
+      noteElement.style.width = `${rect.width}px`;
+    }
+    
     noteElement.classList.add('dragging');
     noteElement.style.zIndex = '1000';
     
-    document.addEventListener('mousemove', this.dragMove.bind(this));
-    document.addEventListener('mouseup', this.stopDrag.bind(this));
+    document.addEventListener('mousemove', this.dragMove);
+    document.addEventListener('mouseup', this.stopDrag);
   }
   
-
   dragMove(e) {
     if (!this.isDragging || !this.dragNote) return;
     
@@ -163,19 +204,20 @@ class NotesManager {
       const dx = e.clientX - this.initialX;
       const dy = e.clientY - this.initialY;
       
-      this.dragNote.style.position = 'absolute';
       this.dragNote.style.left = `${this.initialNoteX + dx}px`;
       this.dragNote.style.top = `${this.initialNoteY + dy}px`;
     });
   }
   
-
   stopDrag() {
     if (!this.isDragging || !this.dragNote) return;
     
     this.dragNote.classList.remove('dragging');
     
-    this.dragNote.style.zIndex = '1';
+    // Keep elevated z-index for a moment to ensure it stays on top if notes overlap
+    setTimeout(() => {
+      this.dragNote.style.zIndex = '5';
+    }, 200);
     
     const noteId = this.dragNote.id;
     const noteIndex = this.notes.findIndex(note => note.id === noteId);
@@ -192,11 +234,26 @@ class NotesManager {
     this.isDragging = false;
     this.dragNote = null;
     
-    document.removeEventListener('mousemove', this.dragMove.bind(this));
-    document.removeEventListener('mouseup', this.stopDrag.bind(this));
+    document.removeEventListener('mousemove', this.dragMove);
+    document.removeEventListener('mouseup', this.stopDrag);
   }
   
   createNote(title, text, category = 'none', color = '#fff9b1') {
+    // Calculate a better random position within visible area
+    const containerRect = this.container.getBoundingClientRect();
+    const notesAreaRect = document.querySelector('.notes-area').getBoundingClientRect();
+    
+    // Calculate a position that's visible within the notes area
+    // Also respect the current scroll position
+    const scrollTop = this.container.scrollTop;
+    const scrollLeft = this.container.scrollLeft;
+    
+    const maxWidth = notesAreaRect.width - 250; // Note width estimate
+    const maxHeight = notesAreaRect.height - 250; // Note height estimate
+    
+    const randomLeft = Math.max(50, Math.min(maxWidth, Math.random() * maxWidth));
+    const randomTop = Math.max(50, Math.min(maxHeight, Math.random() * maxHeight));
+    
     const newNote = {
       id: Utils.generateId(),
       title,
@@ -205,8 +262,8 @@ class NotesManager {
       color,
       date: new Date(),
       position: {
-        left: `${Math.random() * (window.innerWidth - 300)}px`,
-        top: `${Math.random() * (window.innerHeight - 300)}px`
+        left: `${randomLeft + scrollLeft}px`,
+        top: `${randomTop + scrollTop}px`
       },
       pinned: false
     };
@@ -454,10 +511,26 @@ class NotesManager {
     
     document.getElementById('btn-grid-view').addEventListener('click', () => {
       document.querySelector('.notes-area').classList.remove('view-list');
+      // Restore absolute positioning when switching back to grid view
+      document.querySelectorAll('.note').forEach(note => {
+        const noteId = note.id;
+        const noteData = this.notes.find(n => n.id === noteId);
+        if (noteData && noteData.position) {
+          note.style.position = 'absolute';
+          note.style.left = noteData.position.left;
+          note.style.top = noteData.position.top;
+        }
+      });
     });
     
     document.getElementById('btn-list-view').addEventListener('click', () => {
       document.querySelector('.notes-area').classList.add('view-list');
+      // Switch to relative positioning in list view
+      document.querySelectorAll('.note').forEach(note => {
+        note.style.position = 'relative';
+        note.style.left = 'auto';
+        note.style.top = 'auto';
+      });
     });
   }
 }
