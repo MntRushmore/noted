@@ -305,9 +305,9 @@ main {
 }
 
 .notes-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 20px;
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
   padding: 10px;
 }
 
@@ -317,31 +317,46 @@ main {
 }
 
 .view-list .note {
+  position: relative !important;
   width: 100% !important;
   height: auto !important;
   max-width: 800px;
-  margin: 0 auto;
+  margin: 0 auto 20px auto !important;
+  left: auto !important;
+  top: auto !important;
 }
 
 .note {
   background: var(--note-default);
   border-radius: 15px;
   box-shadow: var(--note-shadow);
-  width: 100%;
+  width: 250px;
   height: 250px;
   box-sizing: border-box;
   position: relative;
-  transition: box-shadow 0.2s ease, transform 0.1s ease;
+  transition: box-shadow 0.2s ease;
   display: flex;
   flex-direction: column;
   cursor: grab;
   overflow: hidden;
+  touch-action: none;
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+}
+
+.note.dragging {
+  cursor: grabbing;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  opacity: 0.95;
+  transform: scale(1.02);
+  transition: none;
+  z-index: 1000 !important;
+  will-change: left, top;
+  pointer-events: none;
 }
 
 .note:active {
   cursor: grabbing;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-  transform: scale(1.02);
 }
 
 .note-header {
