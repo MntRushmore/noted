@@ -334,12 +334,14 @@ main {
   height: 250px;
   box-sizing: border-box;
   position: relative;
-  transition: box-shadow 0.2s ease, transform 0.1s ease-out;
+  transition: box-shadow 0.2s ease;
   display: flex;
   flex-direction: column;
   cursor: grab;
   overflow: hidden;
-  touch-action: none; /* Prevents touch scrolling during drag on mobile */
+  touch-action: none;
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
 }
 
 .note.dragging {

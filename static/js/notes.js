@@ -183,19 +183,10 @@ class NotesManager {
     this.isDragging = true;
     this.dragNote = noteElement;
     
-    // Store initial mouse position
-    this.initialX = e.clientX;
-    this.initialY = e.clientY;
-    
-    // Get current note position
-    const notesArea = document.querySelector('.notes-area');
-    const scrollLeft = notesArea.scrollLeft;
-    const scrollTop = notesArea.scrollTop;
-    
-    // Get current note position, accounting for scroll position
     const rect = noteElement.getBoundingClientRect();
+    const notesArea = document.querySelector('.notes-area');
     
-    // Store the offset of mouse cursor within the note
+    // Calculate offset from the mouse to the top-left corner of the note
     this.offsetX = e.clientX - rect.left;
     this.offsetY = e.clientY - rect.top;
     
@@ -203,13 +194,9 @@ class NotesManager {
     if (noteElement.style.position !== 'absolute') {
       noteElement.style.position = 'absolute';
       noteElement.style.width = `${rect.width}px`;
-      noteElement.style.left = `${rect.left + scrollLeft}px`;
-      noteElement.style.top = `${rect.top + scrollTop}px`;
+      noteElement.style.left = `${rect.left + notesArea.scrollLeft}px`;
+      noteElement.style.top = `${rect.top + notesArea.scrollTop}px`;
     }
-    
-    // Parse current position (removing 'px' and converting to number)
-    this.initialNoteX = parseFloat(noteElement.style.left) || rect.left + scrollLeft;
-    this.initialNoteY = parseFloat(noteElement.style.top) || rect.top + scrollTop;
     
     noteElement.classList.add('dragging');
     noteElement.style.zIndex = '1000';
