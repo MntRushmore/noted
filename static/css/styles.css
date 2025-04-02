@@ -334,18 +334,21 @@ main {
   height: 250px;
   box-sizing: border-box;
   position: relative;
-  transition: box-shadow 0.2s ease;
+  transition: box-shadow 0.2s ease, transform 0.1s ease-out;
   display: flex;
   flex-direction: column;
   cursor: grab;
   overflow: hidden;
+  touch-action: none; /* Prevents touch scrolling during drag on mobile */
 }
 
 .note.dragging {
   cursor: grabbing;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-  opacity: 0.9;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  opacity: 0.95;
+  transform: scale(1.02);
   transition: none;
+  z-index: 1000 !important;
 }
 
 .note:active {

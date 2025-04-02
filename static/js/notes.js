@@ -11,8 +11,14 @@ class NotesManager {
     this.initialX = 0;
     this.initialY = 0;
     this.initialNoteX = 0;
+    this.initialNoteY = 0;
+    this.offsetX = 0;
+    this.offsetY = 0;
     this.dragMove = this.dragMove.bind(this);
     this.stopDrag = this.stopDrag.bind(this);
+    this.touchStart = this.touchStart.bind(this);
+    this.touchMove = this.touchMove.bind(this);
+    this.touchEnd = this.touchEnd.bind(this);
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
@@ -121,12 +127,14 @@ class NotesManager {
       categoryElement.style.display = 'none';
     }
     
-    // Make entire note draggable, not just the handle
+    // Make entire note draggable, not just the handle with mouse and touch
     noteElement.addEventListener('mousedown', this.startDrag.bind(this));
+    noteElement.addEventListener('touchstart', this.touchStart.bind(this), { passive: false });
     
     // Add a specific handle for better UX
     const dragHandle = noteElement.querySelector('.note-drag-handle');
     dragHandle.addEventListener('mousedown', this.startDrag.bind(this));
+    dragHandle.addEventListener('touchstart', this.touchStart.bind(this), { passive: false });
     
     const deleteButton = noteElement.querySelector('.delete-note');
     deleteButton.addEventListener('click', () => this.deleteNote(note.id));
@@ -175,20 +183,33 @@ class NotesManager {
     this.isDragging = true;
     this.dragNote = noteElement;
     
+    // Store initial mouse position
     this.initialX = e.clientX;
     this.initialY = e.clientY;
     
-    const rect = noteElement.getBoundingClientRect();
-    this.initialNoteX = rect.left;
-    this.initialNoteY = rect.top;
+    // Get current note position
+    const notesArea = document.querySelector('.notes-area');
+    const scrollLeft = notesArea.scrollLeft;
+    const scrollTop = notesArea.scrollTop;
     
-    // Set the note to be positioned absolutely if it isn't already
+    // Get current note position, accounting for scroll position
+    const rect = noteElement.getBoundingClientRect();
+    
+    // Store the offset of mouse cursor within the note
+    this.offsetX = e.clientX - rect.left;
+    this.offsetY = e.clientY - rect.top;
+    
+    // If note isn't absolutely positioned yet, position it properly
     if (noteElement.style.position !== 'absolute') {
       noteElement.style.position = 'absolute';
-      noteElement.style.left = `${rect.left}px`;
-      noteElement.style.top = `${rect.top}px`;
       noteElement.style.width = `${rect.width}px`;
+      noteElement.style.left = `${rect.left + scrollLeft}px`;
+      noteElement.style.top = `${rect.top + scrollTop}px`;
     }
+    
+    // Parse current position (removing 'px' and converting to number)
+    this.initialNoteX = parseFloat(noteElement.style.left) || rect.left + scrollLeft;
+    this.initialNoteY = parseFloat(noteElement.style.top) || rect.top + scrollTop;
     
     noteElement.classList.add('dragging');
     noteElement.style.zIndex = '1000';
@@ -200,12 +221,19 @@ class NotesManager {
   dragMove(e) {
     if (!this.isDragging || !this.dragNote) return;
     
+    // Calculate new position based on current mouse position
+    const notesArea = document.querySelector('.notes-area');
+    const scrollLeft = notesArea.scrollLeft;
+    const scrollTop = notesArea.scrollTop;
+    
     requestAnimationFrame(() => {
-      const dx = e.clientX - this.initialX;
-      const dy = e.clientY - this.initialY;
+      // Calculate position based on mouse position minus the offset within the note
+      const newX = e.clientX - this.offsetX + scrollLeft;
+      const newY = e.clientY - this.offsetY + scrollTop;
       
-      this.dragNote.style.left = `${this.initialNoteX + dx}px`;
-      this.dragNote.style.top = `${this.initialNoteY + dy}px`;
+      // Update note position
+      this.dragNote.style.left = `${newX}px`;
+      this.dragNote.style.top = `${newY}px`;
     });
   }
   
@@ -236,6 +264,84 @@ class NotesManager {
     
     document.removeEventListener('mousemove', this.dragMove);
     document.removeEventListener('mouseup', this.stopDrag);
+    document.removeEventListener('touchmove', this.touchMove);
+    document.removeEventListener('touchend', this.touchEnd);
+  }
+  
+  // Touch event handlers
+  touchStart(e) {
+    const noteElement = e.target.closest('.note');
+    if (!noteElement) return;
+    
+    // Prevent default to avoid scrolling while dragging
+    e.preventDefault();
+    
+    this.isDragging = true;
+    this.dragNote = noteElement;
+    
+    const touch = e.touches[0];
+    
+    // Store initial touch position
+    this.initialX = touch.clientX;
+    this.initialY = touch.clientY;
+    
+    // Get current note position
+    const notesArea = document.querySelector('.notes-area');
+    const scrollLeft = notesArea.scrollLeft;
+    const scrollTop = notesArea.scrollTop;
+    
+    // Get current note position
+    const rect = noteElement.getBoundingClientRect();
+    
+    // Store the offset of touch point within the note
+    this.offsetX = touch.clientX - rect.left;
+    this.offsetY = touch.clientY - rect.top;
+    
+    // If note isn't absolutely positioned yet, position it properly
+    if (noteElement.style.position !== 'absolute') {
+      noteElement.style.position = 'absolute';
+      noteElement.style.width = `${rect.width}px`;
+      noteElement.style.left = `${rect.left + scrollLeft}px`;
+      noteElement.style.top = `${rect.top + scrollTop}px`;
+    }
+    
+    // Parse current position
+    this.initialNoteX = parseFloat(noteElement.style.left) || rect.left + scrollLeft;
+    this.initialNoteY = parseFloat(noteElement.style.top) || rect.top + scrollTop;
+    
+    noteElement.classList.add('dragging');
+    noteElement.style.zIndex = '1000';
+    
+    document.addEventListener('touchmove', this.touchMove, { passive: false });
+    document.addEventListener('touchend', this.touchEnd);
+  }
+  
+  touchMove(e) {
+    if (!this.isDragging || !this.dragNote) return;
+    
+    // Prevent default to stop scrolling
+    e.preventDefault();
+    
+    const touch = e.touches[0];
+    
+    // Calculate new position based on current touch position
+    const notesArea = document.querySelector('.notes-area');
+    const scrollLeft = notesArea.scrollLeft;
+    const scrollTop = notesArea.scrollTop;
+    
+    requestAnimationFrame(() => {
+      // Calculate position based on touch position minus the offset within the note
+      const newX = touch.clientX - this.offsetX + scrollLeft;
+      const newY = touch.clientY - this.offsetY + scrollTop;
+      
+      // Update note position
+      this.dragNote.style.left = `${newX}px`;
+      this.dragNote.style.top = `${newY}px`;
+    });
+  }
+  
+  touchEnd(e) {
+    this.stopDrag();
   }
   
   createNote(title, text, category = 'none', color = '#fff9b1') {
