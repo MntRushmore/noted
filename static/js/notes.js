@@ -73,9 +73,8 @@ class NotesManager {
       ? this.notes 
       : this.notes.filter(note => note.category === this.currentCategory);
     
-    // Sort by z-index or pinned status to maintain proper layering
     const sortedNotes = [...filteredNotes].sort((a, b) => {
-      // Pinned notes should appear on top
+      // pinned to the top
       if (a.pinned && !b.pinned) return 1;
       if (!a.pinned && b.pinned) return -1;
       return 0;
@@ -85,7 +84,6 @@ class NotesManager {
       this.renderNote(note);
     });
     
-    // If in grid view, reset position to relative for proper layout
     if (document.querySelector('.notes-area').classList.contains('view-list')) {
       document.querySelectorAll('.note').forEach(note => {
         note.style.position = 'relative';
@@ -103,7 +101,6 @@ class NotesManager {
     noteElement.id = note.id;
     noteElement.style.backgroundColor = note.color || '#fff9b1';
     
-    // Apply saved position if available
     if (note.position) {
       noteElement.style.position = 'absolute';
       noteElement.style.left = note.position.left;
@@ -127,11 +124,9 @@ class NotesManager {
       categoryElement.style.display = 'none';
     }
     
-    // Make entire note draggable, not just the handle with mouse and touch
     noteElement.addEventListener('mousedown', this.startDrag.bind(this));
     noteElement.addEventListener('touchstart', this.touchStart.bind(this), { passive: false });
     
-    // Add a specific handle for better UX
     const dragHandle = noteElement.querySelector('.note-drag-handle');
     dragHandle.addEventListener('mousedown', this.startDrag.bind(this));
     dragHandle.addEventListener('touchstart', this.touchStart.bind(this), { passive: false });
@@ -186,11 +181,10 @@ class NotesManager {
     const rect = noteElement.getBoundingClientRect();
     const notesArea = document.querySelector('.notes-area');
     
-    // Calculate offset from the mouse to the top-left corner of the note
+
     this.offsetX = e.clientX - rect.left;
     this.offsetY = e.clientY - rect.top;
     
-    // If note isn't absolutely positioned yet, position it properly
     if (noteElement.style.position !== 'absolute') {
       noteElement.style.position = 'absolute';
       noteElement.style.width = `${rect.width}px`;
@@ -251,12 +245,12 @@ class NotesManager {
     document.removeEventListener('touchend', this.touchEnd);
   }
   
-  // Touch event handlers
+  
   touchStart(e) {
     const noteElement = e.target.closest('.note');
     if (!noteElement) return;
     
-    // Prevent default to avoid scrolling while dragging
+   
     e.preventDefault();
     
     this.isDragging = true;
@@ -264,11 +258,11 @@ class NotesManager {
     
     const touch = e.touches[0];
     
-    // Store initial touch position
+    
     this.initialX = touch.clientX;
     this.initialY = touch.clientY;
     
-    // Get current note position
+   
     const notesArea = document.querySelector('.notes-area');
     const scrollLeft = notesArea.scrollLeft;
     const scrollTop = notesArea.scrollTop;
@@ -340,7 +334,7 @@ class NotesManager {
     const randomTop = Math.max(50, Math.min(maxHeight, Math.random() * maxHeight));
     
     const newNote = {
-      id: Utils.generateId(),
+      id: Utils.generateId() || `note-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       title,
       text,
       category,
